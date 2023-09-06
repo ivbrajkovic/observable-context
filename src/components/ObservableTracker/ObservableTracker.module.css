@@ -1,0 +1,63 @@
+.card {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: fit-content;
+  min-width: 16rem;
+
+  display: flex;
+  flex-direction: column;
+
+  background-color: #242424;
+  color: #fefefe;
+  border-radius: 0.25rem;
+  border: 1px solid #333;
+
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.card p,
+.card pre,
+.card h3 {
+  margin: 0;
+  padding: 0;
+}
+
+.card pre {
+  font-size: 1rem;
+}
+
+.card header {
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  border-bottom: 1px solid #333;
+
+  cursor: grab;
+}
+
+.card header:hover {
+  background-color: #333;
+}
+.card header:active {
+  cursor: grabbing;
+}
+
+.card main {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.subscriber-card-container {
+  padding-inline: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.subscriber-card {
+  display: flex;
+  flex-direction: column;
+}
