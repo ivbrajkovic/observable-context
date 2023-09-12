@@ -7,7 +7,13 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
   const useSubscribeMany = <K extends keyof T>(
     keys: K[],
     handler?: (key: K, value: T[K]) => void,
-  ) => {
+  ): [
+    state: Partial<T>,
+    dispatch: (updates: {
+      [key in K]?: T[key];
+    }) => void,
+    observed: T,
+  ] => {
     const observable = useObservableContext();
 
     const [state, setState] = useState(() =>
@@ -39,7 +45,7 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
       [observable],
     );
 
-    return [state, setValue] as const;
+    return [state, setValue, observable.observed];
   };
 
   return useSubscribeMany;

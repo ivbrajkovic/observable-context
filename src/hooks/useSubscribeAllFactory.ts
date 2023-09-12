@@ -31,7 +31,7 @@ const subscribeAllHookFactory = <T extends Record<string, unknown>>(
       [observable],
     );
 
-    return [state, setValue] as const;
+    return [state, setValue, observable.observed] as const;
   };
 
   return useSubscribeAll;

@@ -26,7 +26,7 @@ const subscribeHookFactory = <T extends Record<string, unknown>>(
       [key, observable],
     );
 
-    return [state, setValue] as const;
+    return [state, setValue, observable.observed] as const;
   };
 
   return useSubscribe;

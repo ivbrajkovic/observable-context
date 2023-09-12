@@ -15,7 +15,6 @@
     "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
-    "declarationDir": "./dist",
     "removeComments": true,
     "jsx": "react-jsx",
     "jsxFactory": "",
@@ -33,6 +32,6 @@
   },
 
   // "include": ["src/**/*.ts", "node_modules/microbundle/index.d.ts"],
-  "include": ["src/**/*.ts", "src/index.d.ts"],
+  "include": ["src/**/*.ts", "src/observable-context.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

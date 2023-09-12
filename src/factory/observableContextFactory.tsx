@@ -19,9 +19,11 @@ export function observableContextFactory<T extends Record<string, unknown>>(
   const ObservableContext = createContext<ObservableContext<T>>(null);
 
   function ContextProvider(props: ContextProviderProps<T>) {
-    const [observable] = useState<Observable<T>>(
-      () => new Observable(props.initial),
-    );
+    const [observable] = useState<Observable<T>>(() => {
+      console.log("initializing observable");
+
+      return new Observable(props.initial);
+    });
 
     return (
       <ObservableContext.Provider value={observable}>
