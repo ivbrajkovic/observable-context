@@ -12,9 +12,10 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "declaration": true,
     "outDir": "./dist",
-    "declarationDir": "./types",
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "./dist",
     "removeComments": true,
     "jsx": "react-jsx",
     "jsxFactory": "",
@@ -32,6 +33,6 @@
   },
 
   // "include": ["src/**/*.ts", "node_modules/microbundle/index.d.ts"],
-  "include": ["src/**/*.ts", "index.d.ts"],
+  "include": ["src/**/*.ts", "src/index.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

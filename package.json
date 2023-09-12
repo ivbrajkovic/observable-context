@@ -3,7 +3,20 @@
   "author": "Ivan Brajković",
   "description": "Simple reactive context state",
   "license": "ISC",
-  "version": "1.0.0",
+  "version": "1.0.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivbrajkovic/observable-context.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ivbrajkovic/observable-context"
+  },
+  "homepage": "https://github.com/ivbrajkovic/observable-context#readme",
+  "keywords": [
+    "observable",
+    "observable context",
+    "observable react context"
+  ],
   "type": "module",
   "source": "src/index.ts",
   "main": "dist/index.js",
@@ -11,9 +24,10 @@
   "types": "types/index.d.ts",
   "unpkg": "dist/index.umd.js",
   "scripts": {
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint ./src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "build": "microbundle",
-    "dev": "microbundle watch"
+    "dev": "microbundle watch",
+    "npm:publish": "npm publish --access public"
   },
   "peerDependencies": {
     "react": "^18.2.0",
