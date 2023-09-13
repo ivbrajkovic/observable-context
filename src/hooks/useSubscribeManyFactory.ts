@@ -39,7 +39,7 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
       [observable],
     );
 
-    return [state, setValue, observable.observed];
+    return [state, setValue, observable.observed] as const;
   };
 
   return useSubscribeMany;

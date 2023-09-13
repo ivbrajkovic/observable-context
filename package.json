@@ -3,7 +3,7 @@
   "author": "Ivan Brajković",
   "description": "Simple reactive context state",
   "license": "ISC",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ivbrajkovic/observable-context.git"
