@@ -7,20 +7,14 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
   const useSubscribeMany = <K extends keyof T>(
     keys: K[],
     handler?: (key: K, value: T[K]) => void,
-  ): [
-    state: Partial<T>,
-    dispatch: (updates: {
-      [key in K]?: T[key];
-    }) => void,
-    observed: T,
-  ] => {
+  ) => {
     const observable = useObservableContext();
 
     const [state, setState] = useState(() =>
       keys.reduce((acc, key) => {
         acc[key] = observable.observed[key];
         return acc;
-      }, {} as Partial<T>),
+      }, {} as Pick<T, K>),
     );
 
     const handlerRef = useRef(handler);
