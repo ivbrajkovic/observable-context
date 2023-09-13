@@ -10,7 +10,7 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
   ) => {
     const observable = useObservableContext();
 
-    const [state, setState] = useState(() =>
+    const [state, _setState] = useState(() =>
       keys.reduce((acc, key) => {
         acc[key] = observable.observed[key];
         return acc;
@@ -25,11 +25,11 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
     useEffect(() => {
       return observable.subscribeMany(keys, (key, value) => {
         if (handlerRef.current) handlerRef.current(key as K, value as T[K]);
-        else setState((state) => ({ ...state, [key]: value }));
+        else _setState((state) => ({ ...state, [key]: value }));
       });
     }, [keys, observable]);
 
-    const setValue = useCallback(
+    const setState = useCallback(
       (updates: {
         [key in K]?: T[key];
       }) =>
@@ -39,7 +39,7 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
       [observable],
     );
 
-    return [state, setValue, observable.observed] as const;
+    return { state, setState, observed: observable.observed };
   };
 
   return useSubscribeMany;
