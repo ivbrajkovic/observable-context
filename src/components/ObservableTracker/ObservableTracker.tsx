@@ -3,7 +3,7 @@ import { cloneDeep } from "lodash-es";
 import { ElementRef, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import classes from "components/ObservableTracker/ObservableTracker.module.css";
+import classes from "./ObservableTracker.module.css";
 
 type WithEventListeners = {
   addEventListener: (type: string, listener: EventListener) => void;

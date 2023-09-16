@@ -3,7 +3,7 @@
   "author": "Ivan Brajković",
   "description": "Simple reactive context state",
   "license": "ISC",
-  "version": "1.0.10",
+  "version": "1.0.14",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ivbrajkovic/observable-context.git"
@@ -30,10 +30,12 @@
     "npm:publish": "npm publish --access public"
   },
   "peerDependencies": {
+    "lodash-es": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.9",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",

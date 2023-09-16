@@ -9,21 +9,24 @@ export type ObservableContext<T extends Record<string, unknown>> =
   Observable<T> | null;
 
 type ContextProviderProps<T> = {
-  initial: T;
+  initial: T | (() => T);
   children: ReactNode;
 };
 
 export function observableContextFactory<T extends Record<string, unknown>>(
-  name = "ContextProvider",
+  name = "ObservableContextProvider",
 ) {
   const ObservableContext = createContext<ObservableContext<T>>(null);
 
   function ContextProvider(props: ContextProviderProps<T>) {
-    const [observable] = useState<Observable<T>>(() => {
-      console.log("initializing observable");
-
-      return new Observable(props.initial);
-    });
+    const [observable] = useState<Observable<T>>(
+      () =>
+        new Observable(
+          typeof props.initial === "function" //
+            ? props.initial()
+            : props.initial,
+        ),
+    );
 
     return (
       <ObservableContext.Provider value={observable}>
