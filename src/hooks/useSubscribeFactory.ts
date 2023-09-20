@@ -10,7 +10,7 @@ const subscribeHookFactory = <T extends Record<string, unknown>>(
   ) => {
     const observable = useObservableContext();
 
-    const [state, _setState] = useState(() => observable.observed[key]);
+    const [state, _setState] = useState(() => observable.proxy[key]);
     const handlerRef = useRef(handler ?? _setState);
 
     useEffect(() => {
@@ -22,11 +22,11 @@ const subscribeHookFactory = <T extends Record<string, unknown>>(
     }, [key, observable]);
 
     const setState = useCallback(
-      (value: T[K]) => (observable.observed[key] = value),
+      (value: T[K]) => (observable.proxy[key] = value),
       [key, observable],
     );
 
-    return { state, setState, observed: observable.observed };
+    return { state, setState, proxy: observable.proxy };
   };
 
   return useSubscribe;

@@ -1,104 +1,67 @@
 import { Observable, SubscriberData } from "class/Observable";
-import { cloneDeep } from "lodash-es";
-import { ElementRef, useEffect, useRef, useState } from "react";
+import { ElementRef, useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import classes from "./ObservableTracker.module.css";
 
-type WithEventListeners = {
-  addEventListener: (type: string, listener: EventListener) => void;
-  removeEventListener: (type: string, listener: EventListener) => void;
-};
-
-function hasEventListeners(obj: unknown): obj is WithEventListeners {
-  return typeof obj === "object" && obj !== null && "addEventListener" in obj;
-}
-
-function elementToObject(el: HTMLInputElement) {
-  return {
-    tagName: el.tagName,
-    id: el.id,
-    type: el.type,
-    name: el.name,
-    value: el.value,
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseObject(obj: Record<string, any>) {
-  for (const p in obj) {
-    // eslint-disable-next-line no-prototype-builtins
-    if (obj.hasOwnProperty(p)) {
-      if (hasEventListeners(obj[p])) {
-        obj[p] = elementToObject(obj[p]);
-      } else if (typeof obj[p] === "object") {
-        obj[p] = parseObject(obj[p]);
+function stringifyWithCircularCheck(obj: Record<string, unknown>) {
+  const seen = new Set();
+  return JSON.stringify(
+    obj,
+    (_, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (value instanceof HTMLElement) {
+          return {
+            id: value.id,
+            tagName: value.tagName,
+            name: "name" in value ? value.name : undefined,
+            value: "value" in value ? value.value : undefined,
+          };
+        }
+        if (seen.has(value)) return; // If we've seen this object before, skip it
+        seen.add(value);
       }
-    }
-  }
-  return obj;
+      return value;
+    },
+    2,
+  );
 }
 
 function ObservableTracker<T extends Record<string, unknown>>({
-  hasElement,
   useObservableContext,
+  refreshInterval = 1000,
 }: {
-  hasElement?: boolean;
   useObservableContext: () => Observable<T>;
+  refreshInterval?: number;
 }) {
   const observable = useObservableContext();
 
   const observableTrackerRef = useRef<ElementRef<"article">>(null);
   const observableTrackerHeaderRef = useRef<ElementRef<"header">>(null);
 
-  const [state, setState] = useState(() => {
-    return cloneDeep(observable.observed);
-  });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, render] = useReducer((s) => s ^ 1, 0);
   const [subscribers, setSubscribers] = useState<SubscriberData[]>([]);
 
-  useEffect(() => {
-    const getSubscribers = () => {
-      const sub = observable.printSubscribers();
-      if (Array.isArray(sub)) setSubscribers(sub);
-    };
+  const getSubscribers = () => {
+    const sub = observable.printSubscribers();
+    if (Array.isArray(sub)) setSubscribers(sub);
+  };
 
+  useEffect(() => {
+    const interval = setInterval(render, refreshInterval);
+    return () => clearInterval(interval);
+  }, [refreshInterval]);
+
+  useEffect(() => {
     observable.onSubscribe = getSubscribers;
     observable.onUnsubscribe = getSubscribers;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [observable]);
 
   useEffect(() => {
-    const subscription = observable.subscribeAll(() => {
-      setState(cloneDeep(observable.observed));
-    });
-    return subscription;
+    return observable.subscribeAll(() => render());
   }, [observable]);
-
-  // const [elements] = useState<Set<Element>>(() => new Set());
-  useEffect(() => {
-    if (!hasElement) return;
-    const handleChange = () => setState(cloneDeep(observable.observed));
-    const elements = new Set<WithEventListeners>();
-    const deepForEach = (obj: Record<string, unknown>) => {
-      for (const p in obj) {
-        // eslint-disable-next-line no-prototype-builtins
-        if (obj.hasOwnProperty(p)) {
-          const element = obj[p];
-          if (hasEventListeners(element)) {
-            elements.add(element);
-            element.addEventListener("input", handleChange);
-          } else if (typeof element === "object" && element !== null) {
-            deepForEach(element as Record<string, unknown>);
-          }
-        }
-      }
-    };
-    deepForEach(observable.observed);
-    return () => {
-      elements.forEach((element) => {
-        element.removeEventListener("input", handleChange);
-      });
-    };
-  }, [hasElement, observable.observed]);
 
   useEffect(() => {
     if (!observableTrackerRef.current) return;
@@ -143,17 +106,26 @@ function ObservableTracker<T extends Record<string, unknown>>({
     }
   }, []);
 
+  const mainRef = useRef<ElementRef<"main">>(null);
+  const toggleClose = () => {
+    if (!mainRef.current) return;
+    mainRef.current.classList.toggle(classes["closed"]);
+  };
+
   return (
     <>
       {createPortal(
         <article ref={observableTrackerRef} className={classes.card}>
-          <header ref={observableTrackerHeaderRef}>
-            <h3>Observable Tracker</h3>
-          </header>
-          <main>
+          <div onDoubleClick={toggleClose}>
+            <header ref={observableTrackerHeaderRef}>
+              <h3>Observable Tracker</h3>
+            </header>
+          </div>
+
+          <main ref={mainRef} className={classes["closed"]}>
             <section>
               <p>State:</p>
-              <pre>{JSON.stringify(parseObject(state), null, 2)}</pre>
+              <pre>{stringifyWithCircularCheck(observable.proxy)}</pre>
             </section>
 
             <section>
@@ -164,14 +136,21 @@ function ObservableTracker<T extends Record<string, unknown>>({
                     key={`${subscriber.key}-${subscriber.handler}`}
                     className={classes["subscriber-card"]}
                   >
-                    <p>Key: {subscriber.key}</p>
-                    <p>Handler: {subscriber.handler}</p>
-                    {/* <p>Details: {subscriber.details}</p> */}
+                    <pre>Key: {subscriber.key}</pre>
+                    <pre>Handler: {subscriber.handler}</pre>
+                    <pre>
+                      {/* Details: {JSON.stringify(subscriber.details, null, 2)} */}
+                    </pre>
                   </div>
                 ))}
               </div>
             </section>
           </main>
+
+          <footer>
+            <button onClick={render}>Refresh</button>
+            <button onClick={getSubscribers}>Subscribers</button>
+          </footer>
         </article>,
         document.body,
       )}

@@ -9,7 +9,7 @@ const subscribeAllHookFactory = <T extends Record<string, unknown>>(
   ) => {
     const observable = useObservableContext();
 
-    const [state, _setState] = useState(() => observable.observed);
+    const [state, _setState] = useState(() => observable.proxy);
 
     const handlerRef = useRef(handler);
     useEffect(() => {
@@ -26,12 +26,12 @@ const subscribeAllHookFactory = <T extends Record<string, unknown>>(
     const setState = useCallback(
       (updates: Partial<T>) =>
         Object.entries(updates).forEach(([key, value]) => {
-          observable.observed[key as keyof T] = value as T[keyof T];
+          observable.proxy[key as keyof T] = value as T[keyof T];
         }),
       [observable],
     );
 
-    return { state, setState, observed: observable.observed };
+    return { state, setState, proxy: observable.proxy };
   };
 
   return useSubscribeAll;

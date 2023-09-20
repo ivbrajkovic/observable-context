@@ -12,7 +12,7 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
 
     const [state, _setState] = useState(() =>
       keys.reduce((acc, key) => {
-        acc[key] = observable.observed[key];
+        acc[key] = observable.proxy[key];
         return acc;
       }, {} as Pick<T, K>),
     );
@@ -34,12 +34,12 @@ const subscribeManyHookFactory = <T extends Record<string, unknown>>(
         [key in K]?: T[key];
       }) =>
         Object.entries(updates).forEach(([key, value]) => {
-          observable.observed[key as keyof T] = value as T[keyof T];
+          observable.proxy[key as keyof T] = value as T[keyof T];
         }),
       [observable],
     );
 
-    return { state, setState, observed: observable.observed };
+    return { state, setState, proxy: observable.proxy };
   };
 
   return useSubscribeMany;

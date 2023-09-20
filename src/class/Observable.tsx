@@ -12,9 +12,9 @@ export type SubscriberData = {
 };
 
 export class Observable<T extends Record<string, unknown>> {
-  #subjectProxy: T;
+  #proxy: T;
   #keys: Array<keyof T>;
-  #handlers: Map<keyof T, Set<Handler<T>>> | null = null;
+  #listeners: Map<keyof T, Set<Handler<T>>> | null = null;
   #allHandlers: Set<Handler<T>> | null = null;
 
   onSubscribe: Subscriber | null = null;
@@ -22,17 +22,20 @@ export class Observable<T extends Record<string, unknown>> {
 
   constructor(subject: T) {
     this.#keys = Object.keys(subject) as Array<keyof T>;
+    this.#proxy = this.#createProxy(subject);
+  }
 
-    this.#subjectProxy = new Proxy(subject, {
+  #createProxy(subject: T) {
+    return new Proxy(subject, {
       set: (target, property, newValue: T[keyof T], receiver) => {
-        // Property must be of type string
+        // Allow only property keys of type string
         if (typeof property !== "string") return false;
 
         // Get property from observed object (target)
         const reflectValue = Reflect.get(target, property, receiver);
 
         // Do not update property if old and new value are equal
-        if (newValue === reflectValue) return true;
+        if (Object.is(newValue, reflectValue)) return true;
 
         // Update property
         const success = Reflect.set(target, property, newValue, receiver);
@@ -42,7 +45,7 @@ export class Observable<T extends Record<string, unknown>> {
           handler(property, newValue);
 
         // Notify listeners
-        this.#handlers?.get(property)?.forEach(invokeHandler);
+        this.#listeners?.get(property)?.forEach(invokeHandler);
 
         // Notify global listeners
         this.#allHandlers?.forEach(invokeHandler);
@@ -52,15 +55,24 @@ export class Observable<T extends Record<string, unknown>> {
     });
   }
 
-  get observed() {
-    return this.#subjectProxy as T;
+  get proxy() {
+    return this.#proxy;
+  }
+
+  // Subscribe to specific property ---------------------------------------
+
+  unsubscribe<K extends keyof T>(key: K, handler: Handler<T, K>) {
+    if (!this.#listeners) return;
+    this.#listeners.get(key)?.delete(handler as Handler<T>);
+    if (!this.#listeners.get(key)?.size) this.#listeners.delete(key);
+    this.onUnsubscribe?.(key, handler as Handler<T>);
   }
 
   subscribe<K extends keyof T>(key: K, handler: Handler<T, K>) {
-    this.#handlers ??= new Map();
-    const handlers = this.#handlers.get(key) ?? new Set();
+    this.#listeners ??= new Map();
+    const handlers = this.#listeners.get(key) ?? new Set();
     handlers.add(handler as Handler<T>);
-    this.#handlers.set(key, handlers);
+    this.#listeners.set(key, handlers);
     this.onSubscribe?.(key, handler as Handler<T>);
     return () => {
       this.unsubscribe(key, handler);
@@ -72,44 +84,43 @@ export class Observable<T extends Record<string, unknown>> {
     return () => keys.forEach((key) => this.unsubscribe(key, handler));
   }
 
-  subscribeAll(handler: Handler<T>) {
-    this.#allHandlers ??= new Set();
-    this.#allHandlers.add(handler);
-    this.onSubscribe?.("All", handler as Handler<T>);
-    return () => {
-      this.#allHandlers?.delete(handler);
-      this.onUnsubscribe?.("All", handler as Handler<T>);
-    };
-  }
-
-  unsubscribe<K extends keyof T>(key: K, handler: Handler<T, K>) {
-    if (!this.#handlers) return;
-    this.#handlers.get(key)?.delete(handler as Handler<T>);
-    if (!this.#handlers.get(key)?.size) this.#handlers.delete(key);
-    this.onUnsubscribe?.(key, handler as Handler<T>);
-  }
+  // Subscribe to all properties (wildcard) ------------------------------
 
   unsubscribeAll() {
-    this.#handlers?.clear();
+    this.#listeners?.clear();
     this.#allHandlers?.clear();
   }
 
+  subscribeAll(handler: Handler<T>) {
+    this.#allHandlers ??= new Set();
+    this.#allHandlers.add(handler);
+    this.onSubscribe?.("*", handler as Handler<T>);
+    return () => {
+      this.#allHandlers?.delete(handler);
+      this.onUnsubscribe?.("*", handler as Handler<T>);
+    };
+  }
+
+  // Utility --------------------------------------------------------------
+
   subscriberCount(key: keyof T) {
-    return this.#handlers?.get(key)?.size ?? 0;
+    return this.#listeners?.get(key)?.size ?? 0;
   }
 
   subscriberAllCount() {
-    if (!this.#handlers) return 0;
-    return Array.from(this.#handlers.values()).reduce(
+    if (!this.#listeners) return 0;
+    return Array.from(this.#listeners.values()).reduce(
       (acc, handlers) => acc + handlers.size,
       0,
     );
   }
 
+  // Debug ----------------------------------------------------------------
+
   printSubscribers(output = false) {
     const tableData: SubscriberData[] = [];
 
-    this.#handlers?.forEach((handlers, key) => {
+    this.#listeners?.forEach((handlers, key) => {
       let index = 0;
       handlers.forEach((handler) =>
         tableData.push({
@@ -133,10 +144,10 @@ export class Observable<T extends Record<string, unknown>> {
     return tableData.length ? tableData : "No subscribers";
   }
 
-  printObservedValues(output = false) {
+  printValues(output = false) {
     const observedValues = Array.from(this.#keys).map((key) => ({
       Property: key,
-      Value: this.#subjectProxy[key],
+      Value: this.#proxy[key],
     }));
 
     if (output) console.table(observedValues);
