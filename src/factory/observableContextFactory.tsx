@@ -1,19 +1,19 @@
 import { ReactNode, createContext, useState } from "react";
+import observableHookFactory from "factory/observableHookFactory";
+import watchHookFactory from "factory/watchHookFactory";
+import watchListHookFactory from "factory/watchListHookFactory";
+import watchAllHookFactory from "factory/watchAllHookFactory";
 import { Observable } from "../class/Observable";
-import contextHookFactory from "hooks/useObservableContextFactory";
-import subscribeHookFactory from "hooks/useSubscribeFactory";
-import subscribeManyHookFactory from "hooks/useSubscribeManyFactory";
-import subscribeAllHookFactory from "hooks/useSubscribeAllFactory";
+import { Subject } from "../class/types";
 
-export type ObservableContext<T extends Record<string, unknown>> =
-  Observable<T> | null;
+export type ObservableContext<T extends Subject> = Observable<T> | null;
 
 type ContextProviderProps<T> = {
   initial: T | (() => T);
   children: ReactNode;
 };
 
-export function observableContextFactory<T extends Record<string, unknown>>(
+export function observableContextFactory<T extends Subject>(
   name = "ObservableContextProvider",
 ) {
   const ObservableContext = createContext<ObservableContext<T>>(null);
@@ -35,16 +35,16 @@ export function observableContextFactory<T extends Record<string, unknown>>(
     );
   }
 
-  const useObservableContext = contextHookFactory(name, ObservableContext);
-  const useSubscribe = subscribeHookFactory(useObservableContext);
-  const useSubscribeMany = subscribeManyHookFactory(useObservableContext);
-  const useSubscribeAll = subscribeAllHookFactory(useObservableContext);
+  const useObservable = observableHookFactory(name, ObservableContext);
+  const useWatch = watchHookFactory(useObservable);
+  const useWatchList = watchListHookFactory(useObservable);
+  const useWatchAll = watchAllHookFactory(useObservable);
 
   return {
     ContextProvider,
-    useObservableContext,
-    useSubscribe,
-    useSubscribeMany,
-    useSubscribeAll,
+    useObservable,
+    useWatch,
+    useWatchList,
+    useWatchAll,
   };
 }

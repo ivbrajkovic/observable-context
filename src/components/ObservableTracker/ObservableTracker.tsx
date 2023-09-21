@@ -1,8 +1,9 @@
-import { Observable, SubscriberData } from "class/Observable";
+import { Observable } from "class/Observable";
 import { ElementRef, useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import classes from "./ObservableTracker.module.css";
+import { SubscriberData } from "class/types";
 
 function stringifyWithCircularCheck(obj: Record<string, unknown>) {
   const seen = new Set();
@@ -43,8 +44,8 @@ function ObservableTracker<T extends Record<string, unknown>>({
   const [_, render] = useReducer((s) => s ^ 1, 0);
   const [subscribers, setSubscribers] = useState<SubscriberData[]>([]);
 
-  const getSubscribers = () => {
-    const sub = observable.printSubscribers();
+  const getWatchers = () => {
+    const sub = observable.printWatchers();
     if (Array.isArray(sub)) setSubscribers(sub);
   };
 
@@ -54,13 +55,15 @@ function ObservableTracker<T extends Record<string, unknown>>({
   }, [refreshInterval]);
 
   useEffect(() => {
-    observable.onSubscribe = getSubscribers;
-    observable.onUnsubscribe = getSubscribers;
+    observable.onWatch = getWatchers;
+    observable.onUnwatch = getWatchers;
+    observable.onWatchAll = getWatchers;
+    observable.onUnwatchAll = getWatchers;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [observable]);
 
   useEffect(() => {
-    return observable.subscribeAll(() => render());
+    return observable.watchAll(() => render());
   }, [observable]);
 
   useEffect(() => {
@@ -115,43 +118,45 @@ function ObservableTracker<T extends Record<string, unknown>>({
   return (
     <>
       {createPortal(
-        <article ref={observableTrackerRef} className={classes.card}>
-          <div onDoubleClick={toggleClose}>
-            <header ref={observableTrackerHeaderRef}>
-              <h3>Observable Tracker</h3>
-            </header>
-          </div>
+        (
+          <article ref={observableTrackerRef} className={classes.card}>
+            <div onDoubleClick={toggleClose}>
+              <header ref={observableTrackerHeaderRef}>
+                <h3>Observable Tracker</h3>
+              </header>
+            </div>
 
-          <main ref={mainRef} className={classes["closed"]}>
-            <section>
-              <p>State:</p>
-              <pre>{stringifyWithCircularCheck(observable.proxy)}</pre>
-            </section>
+            <main ref={mainRef} className={classes["closed"]}>
+              <section>
+                <p>State:</p>
+                <pre>{stringifyWithCircularCheck(observable.proxy)}</pre>
+              </section>
 
-            <section>
-              <p>Subscribers ({subscribers.length}):</p>
-              <div className={classes["subscriber-card-container"]}>
-                {subscribers.map((subscriber) => (
-                  <div
-                    key={`${subscriber.key}-${subscriber.handler}`}
-                    className={classes["subscriber-card"]}
-                  >
-                    <pre>Key: {subscriber.key}</pre>
-                    <pre>Handler: {subscriber.handler}</pre>
-                    <pre>
-                      {/* Details: {JSON.stringify(subscriber.details, null, 2)} */}
-                    </pre>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </main>
+              <section>
+                <p>Subscribers ({subscribers.length}):</p>
+                <div className={classes["subscriber-card-container"]}>
+                  {subscribers.map((subscriber) => (
+                    <div
+                      key={`${subscriber.key}-${subscriber.handler}`}
+                      className={classes["subscriber-card"]}
+                    >
+                      <pre>Key: {subscriber.key}</pre>
+                      <pre>Handler: {subscriber.handler}</pre>
+                      <pre>
+                        {/* Details: {JSON.stringify(subscriber.details, null, 2)} */}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </main>
 
-          <footer>
-            <button onClick={render}>Refresh</button>
-            <button onClick={getSubscribers}>Subscribers</button>
-          </footer>
-        </article>,
+            <footer>
+              <button onClick={render}>Refresh</button>
+              <button onClick={getWatchers}>Subscribers</button>
+            </footer>
+          </article>
+        ) as any,
         document.body,
       )}
     </>
