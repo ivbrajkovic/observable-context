@@ -29,7 +29,6 @@ const watchHookFactory =
     );
 
     const proxy = observable.proxy;
-
     return [state, setState, proxy] as const;
   };
 

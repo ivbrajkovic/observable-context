@@ -42,7 +42,8 @@ const watchListHookFactory =
       [observable],
     );
 
-    return [state, setState] as const;
+    const proxy = observable.proxy;
+    return [state, setState, proxy] as const;
   };
 
 export default watchListHookFactory;
