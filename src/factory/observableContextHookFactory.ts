@@ -2,7 +2,7 @@ import { Subject } from "class/types";
 import { ObservableContext } from "index";
 import { useContext, Context } from "react";
 
-const observableHookFactory =
+const observableContextHookFactory =
   <T extends Subject>(
     name: string,
     observableContext: Context<ObservableContext<T>>,
@@ -17,4 +17,4 @@ const observableHookFactory =
     return observable;
   };
 
-export default observableHookFactory;
+export default observableContextHookFactory;

@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useState } from "react";
-import observableHookFactory from "factory/observableHookFactory";
+import observableContextHookFactory from "factory/observableContextHookFactory";
 import watchHookFactory from "factory/watchHookFactory";
 import watchListHookFactory from "factory/watchListHookFactory";
 import watchAllHookFactory from "factory/watchAllHookFactory";
@@ -35,14 +35,17 @@ export function observableContextFactory<T extends Subject>(
     );
   }
 
-  const useObservable = observableHookFactory(name, ObservableContext);
-  const useWatch = watchHookFactory(useObservable);
-  const useWatchList = watchListHookFactory(useObservable);
-  const useWatchAll = watchAllHookFactory(useObservable);
+  const useObservableContext = observableContextHookFactory(
+    name,
+    ObservableContext,
+  );
+  const useWatch = watchHookFactory(useObservableContext);
+  const useWatchList = watchListHookFactory(useObservableContext);
+  const useWatchAll = watchAllHookFactory(useObservableContext);
 
   return {
     ContextProvider,
-    useObservable,
+    useObservableContext,
     useWatch,
     useWatchList,
     useWatchAll,
