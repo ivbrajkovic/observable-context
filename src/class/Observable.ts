@@ -6,7 +6,7 @@ export class Observable<T extends Subject> {
   #allHandlers = new Set<Handler<T>>();
 
   #isBatching = false;
-  #batchedUpdates = new Map<Handler<T>, Map<keyof T, T[keyof T]>>();
+  #batchedUpdates = new Map<keyof T, T[keyof T]>();
 
   onWatch: ((key: keyof T, handler: Handler<T>) => void) | null = null;
   onUnwatch: ((key: keyof T, handler: Handler<T>) => void) | null = null;
@@ -63,17 +63,39 @@ export class Observable<T extends Subject> {
   // Batched updates ------------------------------------------------------
 
   #batchUpdate<U extends keyof T>(key: U, value: T[U]) {
-    this.#listeners.get(key)?.forEach((handler) => {
-      if (!this.#batchedUpdates.has(handler))
-        this.#batchedUpdates.set(handler, new Map());
-      this.#batchedUpdates.get(handler)?.set(key, value);
-    });
+    this.#batchedUpdates.set(key, value);
   }
 
   #processBatchedUpdates() {
-    this.#batchedUpdates.forEach((changesMap, handler) =>
-      handler(Object.fromEntries(changesMap)),
-    );
+    const aggregatedChangesByHandler = new Map<
+      Handler<T>,
+      Record<keyof T, T[keyof T]>
+    >();
+
+    // Aggregate changes by listener
+    this.#batchedUpdates.forEach((value, key) => {
+      const aggregateForHandler = (handler: Handler<T>) => {
+        const currentChanges =
+          aggregatedChangesByHandler.get(handler) ||
+          ({} as Record<keyof T, T[keyof T]>);
+
+        currentChanges[key] = value;
+        aggregatedChangesByHandler.set(handler, currentChanges);
+      };
+
+      // Aggregate changes for listeners subscribed to the specific key
+      this.#listeners.get(key)?.forEach(aggregateForHandler);
+
+      // Aggregate changes for watchAll handlers
+      this.#allHandlers.forEach(aggregateForHandler);
+    });
+
+    // Notify each listener with their aggregated changes
+    aggregatedChangesByHandler.forEach((changes, handler) => {
+      handler(changes);
+    });
+
+    // Clear batched updates
     this.#batchedUpdates.clear();
   }
 
