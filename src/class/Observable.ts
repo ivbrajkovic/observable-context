@@ -110,6 +110,11 @@ export class Observable<T extends Subject> {
 
   // Watchers -------------------------------------------------------------
 
+  resetWatchers = () => {
+    this.#listeners.clear();
+    this.#allHandlers.clear();
+  };
+
   #unwatch<K extends keyof T>(key: keyof T, handler: Handler<T, K>) {
     this.#listeners.get(key)?.delete(handler);
     if (this.#listeners.get(key)?.size === 0) this.#listeners.delete(key);
